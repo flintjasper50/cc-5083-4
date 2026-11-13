@@ -1,0 +1,266 @@
+{
+  "artefacts": [
+    "rotation_motion_rotation_restored.png",
+    "rotation_motion_rotation_residual.png",
+    "rotation_motion_rotation_curves.png",
+    "rotation_motion_rotation_kernel_field.png"
+  ],
+  "case": {
+    "config": {
+      "iters": 300,
+      "lam_rel": 0.02,
+      "sigma": 0.004,
+      "tol": 1e-09,
+      "tv_eps": 0.01
+    },
+    "grid": [
+      2,
+      3
+    ],
+    "kind": "motion_rotation",
+    "name": "rotation",
+    "seed": 1,
+    "sigma": 0.004,
+    "size": [
+      192,
+      192
+    ],
+    "support": [
+      13,
+      13
+    ],
+    "texture": "text"
+  },
+  "kernel_diagnostics": {
+    "errors": [],
+    "info": [],
+    "ok": true,
+    "warnings": []
+  },
+  "metrics": {
+    "gain_db": 12.40100682165328,
+    "psnr_blurred_vs_sharp": 17.12566916478537,
+    "psnr_input_vs_sharp": 17.122387476460375,
+    "psnr_restored_vs_sharp": 29.523394298113654
+  },
+  "operator_consistency": {
+    "adjoint_exact": true,
+    "adjoint_inner_product_relative_error": 1.1819335916160086e-16,
+    "boundary": "reflect",
+    "boundary_extension_note": "reflect: mirrored padding; its adjoint folds overlapping copies back (verified by the inner-product test above)",
+    "centre_kernel_sum": 1.0,
+    "edge_handling": {
+      "boundary": "reflect",
+      "residual_by_depth_from_edge": [
+        {
+          "pixels": 3008,
+          "ring_px": [
+            0,
+            4
+          ],
+          "rms": 0.002973748074858038
+        },
+        {
+          "pixels": 5632,
+          "ring_px": [
+            4,
+            12
+          ],
+          "rms": 0.0033736953545276957
+        },
+        {
+          "pixels": 7488,
+          "ring_px": [
+            12,
+            24
+          ],
+          "rms": 0.0034321694557075426
+        },
+        {
+          "pixels": 20736,
+          "ring_px": [
+            10000,
+            null
+          ],
+          "rms": 0.00350234761157407
+        }
+      ]
+    },
+    "impulse_equivalence_max_abs": 8.326672684688674e-17,
+    "kernels_unit_sum": true,
+    "max_kernel_sum_deviation": 2.220446049250313e-16
+  },
+  "residual_stats": {
+    "l2": 0.600734169784873,
+    "max_abs": 0.021885928954759055,
+    "mean": 0.00020654132837883462,
+    "relative": 0.009100633730024855,
+    "rms": 0.0031288238009628804
+  },
+  "sample_meta": {
+    "boundary": "reflect",
+    "generator": "svdeblur.synth.generate_sample",
+    "grid_shape": [
+      2,
+      3
+    ],
+    "kernel_kind": "motion_rotation",
+    "missing_cells": [],
+    "normalized": true,
+    "seed": 1,
+    "sigma": 0.004,
+    "size": [
+      192,
+      192
+    ],
+    "support": [
+      13,
+      13
+    ],
+    "texture": "text"
+  },
+  "solve": {
+    "config": {
+      "clip": [
+        0.0,
+        1.0
+      ],
+      "damping_mu": 0.0,
+      "iters": 300,
+      "lam": null,
+      "lam_rel": 0.02,
+      "lam_resolved": 8e-05,
+      "max_backtrack": 20,
+      "max_obj_rises": 6,
+      "noise_floor_factor": 0.8,
+      "reference_weight": true,
+      "semi_window": 8,
+      "sigma": 0.004,
+      "snapshot_iters": [],
+      "step_safety": 1.0,
+      "tol": 1e-09,
+      "tv_eps": 0.01
+    },
+    "final_objective": 0.5338614933610641,
+    "final_residual_abs": 0.600734169784873,
+    "final_residual_relative": 0.009100633730024855,
+    "final_tv": 0.3534207219875038,
+    "iterations_run": 28,
+    "noise_floor": 0.6144000000000001,
+    "objectives": [
+      20.734732470157745,
+      14.023608215860525,
+      9.704448996922693,
+      6.936480583161963,
+      5.121150595577236,
+      3.890580727889469,
+      3.0357329340595673,
+      2.4330617925502978,
+      1.999932940455739,
+      1.684532314906764,
+      1.44802028649142,
+      1.2664906391345283,
+      1.1246370951770774,
+      1.0121479921104721,
+      0.921989460941103,
+      0.8485000744761626,
+      0.7882564097875484,
+      0.7385977548224777,
+      0.6977961590914175,
+      0.664167653486089,
+      0.6365763825219211,
+      0.6138370395861595,
+      0.5946423285423911,
+      0.5781813691039188,
+      0.5642942656168457,
+      0.5525500650700556,
+      0.5425199964628633,
+      0.5338614933610641
+    ],
+    "operator": {
+      "allow_signed": false,
+      "boundary": "reflect",
+      "grid_shape": [
+        2,
+        3
+      ],
+      "image_shape": [
+        192,
+        192
+      ],
+      "interpolation": "bilinear",
+      "n_active_cells": 6,
+      "normalization": "unit_sum",
+      "support": [
+        13,
+        13
+      ]
+    },
+    "residuals": [
+      0.09693288246804295,
+      0.07942934504681175,
+      0.0657349077691519,
+      0.05519186918390419,
+      0.04700284804136529,
+      0.040514582105931396,
+      0.035306455304297525,
+      0.031109461951027467,
+      0.027698124595847678,
+      0.024917665023648318,
+      0.022605876395537926,
+      0.020653514814554495,
+      0.018986439287553437,
+      0.017550059140589488,
+      0.016305793988127773,
+      0.015214597698319822,
+      0.014256101953617813,
+      0.01341286568035621,
+      0.01267660419689263,
+      0.012034480181931031,
+      0.011479463743784864,
+      0.010999843757934794,
+      0.010577352063829084,
+      0.010200195930500023,
+      0.009869877108213675,
+      0.00958095681126243,
+      0.00932643646540918,
+      0.009100633730024855
+    ],
+    "snapshot_iters": [
+      28
+    ],
+    "stop_detail": "||r||=6.007e-01 <= tau*sigma*sqrt(N)=6.144e-01 (tau=0.80, sigma=4.000e-03, N=36864) at iteration 28; further iterations would fit noise",
+    "stop_iteration": 28,
+    "stop_reason": "noise_floor",
+    "tv_terms": [
+      0.2639870069372892,
+      0.2783353300657948,
+      0.2902468558148867,
+      0.2999422308186524,
+      0.3078858364063514,
+      0.3144438707081833,
+      0.3199213382031031,
+      0.3245482091169969,
+      0.32848777867974893,
+      0.33181798817963576,
+      0.33466416674407784,
+      0.337140551184442,
+      0.33925959884074425,
+      0.3411077399759842,
+      0.3427271061309935,
+      0.34417292291884416,
+      0.3454713195874726,
+      0.3466442481097253,
+      0.3476920045486463,
+      0.3486337170481625,
+      0.349475448866704,
+      0.3502254886214645,
+      0.3508919362847142,
+      0.3515038601617949,
+      0.3520602976484025,
+      0.35255965619168306,
+      0.35301403548070925,
+      0.3534207219875038
+    ]
+  }
+}

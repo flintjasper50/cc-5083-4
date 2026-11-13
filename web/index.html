@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SVDB — spatially varying deblurring window</title>
+<style>
+  :root{
+    --bg:#11151a; --panel:#171d24; --panel2:#1e2630; --line:#2d3743;
+    --ink:#e7eef7; --mute:#93a3b5; --accent:#5aa9e6; --bad:#e5686b;
+    --warn:#d9a521; --good:#55c48a; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--ink);font:13px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+  button,input,select{font:inherit;color:inherit}
+  .app{display:grid;grid-template-rows:auto minmax(0,1fr);height:100%;overflow:hidden}
+  header{display:flex;align-items:center;gap:14px;padding:8px 14px;background:var(--panel);
+    border-bottom:1px solid var(--line)}
+  header h1{font-size:14px;margin:0;letter-spacing:.02em;font-weight:650}
+  header .tag{font:11px/1 var(--mono);color:var(--mute);border:1px solid var(--line);
+    padding:3px 7px;border-radius:4px}
+  header .spacer{flex:1}
+  .status{font:11px/1 var(--mono);color:var(--mute);min-width:120px;text-align:right}
+  main{display:grid;grid-template-columns:340px minmax(0,1fr);min-height:0;overflow:hidden}
+  aside{border-right:1px solid var(--line);background:var(--panel);overflow:auto;padding:12px;min-height:0}
+  section.work{display:grid;
+    grid-template-columns:minmax(0,1fr) 360px;
+    grid-template-rows:minmax(0,1fr) auto;
+    grid-template-areas:"viewer side" "strip side";
+    min-height:0;gap:0;overflow:hidden}
+  .viewer{grid-area:viewer}
+  .strip{grid-area:strip}
+  .side{grid-area:side}
+  .viewer{grid-area:viewer;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-template-rows:repeat(2,minmax(0,1fr));gap:10px;padding:12px;min-height:0;overflow:hidden}
+  main > aside{min-height:0}
+
+  /* ---------- controls ---------- */
+  .block{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+  .block:last-child{border-bottom:0}
+  .block h2{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--mute);
+    margin:0 0 8px;font-weight:650}
+  .field-label{display:flex;justify-content:space-between;font:11px/1.4 var(--mono);color:var(--mute);
+    margin:8px 0 3px}
+  .field-label output{color:var(--ink)}
+  select,input[type=number],input[type=text]{width:100%;background:var(--panel2);border:1px solid var(--line);
+    border-radius:5px;padding:5px 7px;font-family:var(--mono);font-size:12px}
+  input[type=range]{width:100%;accent-color:var(--accent);height:18px;scroll-margin:0}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  button{background:var(--panel2);border:1px solid var(--line);border-radius:6px;
+    padding:6px 10px;cursor:pointer;transition:border-color .12s,background .12s}
+  button:hover{border-color:#3c4a5a;background:#232c37}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#07131d;font-weight:650}
+  button.primary:hover{background:#6fb8ee}
+  button.ghost{background:transparent}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .check{display:flex;align-items:center;gap:7px;font:12px/1 var(--mono);color:var(--mute);
+    margin-top:9px}
+  .check input{accent-color:var(--accent)}
+
+  /* ---------- kernel editor ---------- */
+  .kernel-editor{margin-top:6px}
+  .grid-wrap{position:relative;border:1px solid var(--line);border-radius:7px;overflow:hidden;
+    background:var(--panel2)}
+  #gridCanvas{display:block;width:100%;height:auto;image-rendering:pixelated}
+  .grid-legend{display:flex;justify-content:space-between;font:10px/1.3 var(--mono);
+    color:var(--mute);margin-top:5px}
+  .editor-tools{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .editor-tools button{padding:4px 8px;font-size:11px}
+  .psf-box{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px}
+  .psf-canvas{width:100%;height:auto;image-rendering:pixelated;border:1px solid var(--line);
+    border-radius:5px;background:#0c1014}
+  .psf-meta{font:11px/1.5 var(--mono);color:var(--mute);min-width:104px}
+  .psf-meta b{color:var(--ink);font-weight:600}
+  .brush{display:grid;gap:5px;margin-top:8px}
+  .brush .row{align-items:center}
+
+  /* ---------- diagnostics ---------- */
+  .diag-list{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+  .diag{display:grid;grid-template-columns:auto 1fr;gap:8px;padding:7px 8px;border-radius:5px;
+    background:var(--panel2);border-left:3px solid var(--line)}
+  .diag.error{border-left-color:var(--bad)}
+  .diag.warning{border-left-color:var(--warn)}
+  .diag.info{border-left-color:var(--accent)}
+  .diag .code{font:10px/1 var(--mono);color:var(--mute);letter-spacing:.04em}
+  .diag .msg{font-size:11.5px;line-height:1.4;color:var(--ink)}
+  .diag .cells{grid-column:2;font:10px/1.4 var(--mono);color:var(--mute)}
+  .empty-diag{font:11px/1.5 var(--mono);color:var(--mute);padding:6px 2px}
+
+  /* ---------- viewer ---------- */
+  .viewer .image-card{min-height:0}
+  .panel-tabs{display:flex;gap:4px;padding:8px 12px 0}
+  .tab{font:11px/1 var(--mono);padding:6px 10px;border-bottom:2px solid transparent;
+    background:none;border-radius:4px 4px 0 0;color:var(--mute)}
+  .tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent);background:var(--panel2)}
+  .image-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden}
+  .image-card .cap{display:flex;justify-content:space-between;align-items:center;
+    padding:5px 8px;font:10.5px/1 var(--mono);color:var(--mute);border-bottom:1px solid var(--line)}
+  .image-card .cap b{color:var(--ink);font-weight:600;letter-spacing:.02em}
+  .img-stage{flex:1;min-height:0;display:grid;place-items:center;background:#0c1014;position:relative}
+  .img-stage img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;image-rendering:pixelated;display:block}
+  .img-stage .crosshair{position:absolute;border:1px solid rgba(90,169,230,.85);
+    width:9px;height:9px;margin:-5px 0 0 -5px;pointer-events:none;display:none}
+  .img-stage canvas.overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+
+  .side{grid-area:side;background:var(--panel);border-left:1px solid var(--line);
+    overflow:auto;padding:12px;min-height:0}
+  .side .block{border-bottom:1px solid var(--line)}
+  .side .block:first-child{padding-top:0}
+  .chart-wrap{position:relative;width:100%}
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .metric{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:7px 8px}
+  .metric .k{font:10px/1 var(--mono);color:var(--mute)}
+  .metric .v{font:16px/1.3 var(--mono);margin-top:4px;font-weight:600}
+  .metric .v small{font-size:10px;color:var(--mute);font-weight:400}
+  .chart{width:100%;background:var(--panel2);border:1px solid var(--line);
+    border-radius:6px;display:block}
+  .side .block h2{margin-top:2px}
+  .stop{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:8px;
+    font:11px/1.5 var(--mono);color:var(--mute);margin-top:8px}
+  .stop b{color:var(--ink)}
+  .stop .why{color:var(--ink);margin-top:3px}
+  .export-row{display:grid;gap:6px;margin-top:8px}
+  .export-row button{text-align:left;padding:7px 9px}
+  .export-row button span{display:block;font:10px/1.3 var(--mono);color:var(--mute);margin-top:2px;
+    word-break:break-all}
+  .export-row .primary span{color:#0c2a3d}
+
+  /* iteration filmstrip */
+  .strip{grid-area:strip;display:flex;gap:8px;padding:0 12px 10px;overflow-x:auto;
+    align-items:flex-start;min-height:98px}
+  .frame{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:6px;
+    overflow:hidden;cursor:pointer}
+  .frame img{display:block;height:74px;width:74px;object-fit:cover;image-rendering:pixelated}
+  .frame .fcap{font:9.5px/1 var(--mono);color:var(--mute);padding:3px 4px;text-align:center}
+  .frame.sel{border-color:var(--accent)}
+  .frame-label{font:10px/1 var(--mono);color:var(--mute);align-self:center;padding-right:4px}
+
+  .toast{position:fixed;right:16px;bottom:16px;background:#26313d;border:1px solid #3a4959;
+    color:var(--ink);padding:9px 12px;border-radius:7px;font:12px/1.4 var(--mono);max-width:440px;
+    opacity:0;transform:translateY(6px);transition:opacity .18s,transform .18s;pointer-events:none}
+  .toast.show{opacity:1;transform:none}
+  .toast.bad{border-color:var(--bad)}
+  .kbd{font:10px/1 var(--mono);color:var(--mute)}
+  .strip::-webkit-scrollbar{height:8px}
+  @media (max-width:1180px){main{grid-template-columns:300px minmax(0,1fr)}
+    section.work{grid-template-columns:minmax(0,1fr);
+      grid-template-rows:minmax(0,1fr) auto auto;
+      grid-template-areas:"viewer" "strip" "side"}
+    .side{border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Spatially varying deblurring</h1>
+    <span class="tag" id="tagRun">no run</span>
+    <span class="tag" id="tagCfg">—</span>
+    <div class="spacer"></div>
+    <span class="status" id="status">ready</span>
+  </header>
+
+  <main>
+    <aside>
+      <div class="block">
+        <h2>Degraded sample</h2>
+        <select id="caseSelect"></select>
+        <div class="row" style="margin-top:8px">
+          <button id="btnLoad" class="primary">Load sample</button>
+          <button id="btnReload" class="ghost" title="reload ignoring edits">Reload field</button>
+        </div>
+        <div class="kbd" id="caseMeta" style="margin-top:8px"></div>
+      </div>
+
+      <div class="block">
+        <h2>Kernel field</h2>
+        <div class="row" style="margin-bottom:8px">
+          <div><div class="field-label"><span>grid rows</span><output id="oGridR">3</output></div>
+            <input type="range" id="gridR" min="2" max="6" step="1" value="3"></div>
+          <div><div class="field-label"><span>grid cols</span><output id="oGridC">3</output></div>
+            <input type="range" id="gridC" min="2" max="6" step="1" value="3"></div>
+        </div>
+        <div class="field-label"><span>support (px, odd)</span><output id="oSupport">9</output></div>
+        <input type="range" id="support" min="5" max="31" step="2" value="9">
+        <div class="row" style="margin-top:8px">
+          <div><div class="field-label"><span>interpolation</span></div>
+            <select id="interp"></select></div>
+          <div><div class="field-label"><span>normalization</span></div>
+            <select id="norm"></select></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="btnResize">Apply grid/support</button>
+          <button id="btnFill" class="ghost" title="fill empty cells from nearest valid cell">Fill holes</button>
+        </div>
+      </div>
+
+      <div class="block">
+        <h2>Kernel field editor</h2>
+        <div class="kernel-editor">
+          <div class="grid-wrap"><canvas id="gridCanvas"></canvas></div>
+          <div class="grid-legend"><span>click a cell to select · drag sliders to reshape it</span>
+            <span id="gridSel">cell —</span></div>
+          <div class="brush">
+            <div class="field-label"><span>centre dy</span><output id="oCy">0.0</output></div>
+            <input type="range" id="cy" min="-2" max="2" step="0.1" value="0">
+            <div class="field-label"><span>centre dx</span><output id="oCx">0.0</output></div>
+            <input type="range" id="cx" min="-2" max="2" step="0.1" value="0">
+            <div class="field-label"><span>spread y</span><output id="oSy">1.2</output></div>
+            <input type="range" id="sy" min="0.3" max="5" step="0.1" value="1.2">
+            <div class="field-label"><span>spread x</span><output id="oSx">1.2</output></div>
+            <input type="range" id="sx" min="0.3" max="5" step="0.1" value="1.2">
+            <div class="row" style="margin-top:6px">
+              <button id="btnPaint" class="primary">Write PSF</button>
+              <button id="btnClearCell" class="ghost">Mark missing</button>
+            </div>
+            <div class="row" style="margin-top:6px">
+              <button id="btnFillAll" class="ghost">Fill all from selected</button>
+              <button id="btnSym" class="ghost">Mirror cell</button>
+            </div>
+          </div>
+          <div class="psf-box">
+            <canvas id="psfCanvas" class="psf-canvas"></canvas>
+            <div class="psf-meta" id="psfMeta"></div>
+          </div>
+          <div class="kbd" style="margin-top:7px">probe right-click on either image to read the local kernel</div>
+        </div>
+      </div>
+
+      <div class="block">
+        <h2>Solver</h2>
+        <div class="row">
+          <div><div class="field-label"><span>σ (noise std)</span><output id="oSigma">0.004</output></div>
+            <input type="range" id="sigma" min="0.001" max="0.02" step="0.001" value="0.004"></div>
+          <div><div class="field-label"><span>iterations</span><output id="oIters">300</output></div>
+            <input type="range" id="iters" min="20" max="800" step="20" value="300"></div>
+        </div>
+        <div class="field-label"><span>TV weight λ</span><output id="oLam">auto</output></div>
+        <input type="range" id="lam" min="0" max="1" step="1" value="0">
+        <div class="row">
+          <div><div class="field-label"><span>TV ε</span><output id="oEps">0.008</output></div>
+            <input type="range" id="eps" min="0.002" max="0.03" step="0.001" value="0.008"></div>
+          <div><div class="field-label"><span>damping μ</span><output id="oMu">0.00</output></div>
+            <input type="range" id="mu" min="0" max="0.1" step="0.005" value="0"></div>
+        </div>
+        <div class="field-label"><span>noise-floor factor τ</span><output id="oTau">0.80</output></div>
+        <input type="range" id="tau" min="0.4" max="1" step="0.05" value="0.8">
+        <div class="row" style="margin-top:8px">
+          <div><div class="field-label"><span>boundary</span></div>
+            <select id="boundary"></select></div>
+          <div><div class="field-label"><span>signed kernels</span></div>
+            <select id="signed"><option value="0">reject (physical)</option>
+              <option value="1">allow (experimental)</option></select></div>
+        </div>
+        <div class="check"><input type="checkbox" id="showEdges" checked>
+          <label for="showEdges">overlay tent-weight cells on images</label></div>
+        <button id="btnRestore" class="primary" style="width:100%;margin-top:10px;padding:9px">
+          Start restoration</button>
+      </div>
+
+      <div class="block">
+        <h2>Diagnostics</h2>
+        <div class="diag-list" id="diagList"><div class="empty-diag">no field loaded</div></div>
+      </div>
+    </aside>
+
+    <section class="work">
+      <div class="viewer" id="viewer">
+        <div class="image-card">
+          <div class="cap"><b>observed (input)</b><span id="capObs">—</span></div>
+          <div class="img-stage" id="stageObs"><img id="imgObs" alt=""><div class="crosshair"></div></div>
+        </div>
+        <div class="image-card">
+          <div class="cap"><b>restored</b><span id="capRest">no run</span></div>
+          <div class="img-stage" id="stageRest"><img id="imgRest" alt=""><div class="crosshair"></div></div>
+        </div>
+        <div class="image-card">
+          <div class="cap"><b>local kernel</b><span id="capKernel">probe</span></div>
+          <div class="img-stage" id="stageKernel" style="padding:10px">
+            <canvas id="probeCanvas" style="width:100%;height:100%;image-rendering:pixelated"></canvas>
+          </div>
+        </div>
+        <div class="image-card">
+          <div class="cap"><b>residual A(restored) − observed</b><span id="capRes">no run</span></div>
+          <div class="img-stage" id="stageRes"><img id="imgRes" alt=""><div class="crosshair"></div></div>
+        </div>
+      </div>
+      <div class="strip" id="strip"></div>
+      <div class="side">
+        <div class="block">
+          <h2>Run summary</h2>
+          <div class="metrics">
+            <div class="metric"><div class="k">input PSNR</div><div class="v" id="mIn">—</div></div>
+            <div class="metric"><div class="k">restored PSNR</div><div class="v" id="mOut">—</div></div>
+            <div class="metric"><div class="k">gain</div><div class="v" id="mGain">—<small> dB</small></div></div>
+            <div class="metric"><div class="k">residual RMS</div><div class="v" id="mRms">—</div></div>
+          </div>
+          <div class="stop" id="stopBox"><b>stop</b> —</div>
+        </div>
+        <div class="block">
+          <h2>Iteration curves</h2>
+          <div class="chart-wrap"><canvas class="chart" id="chart" width="600" height="210"></canvas></div>
+          <div class="kbd" id="chartNote">residual ‖r‖/‖b‖ (top), objective (mid), TV (bottom)</div>
+        </div>
+        <div class="block">
+          <h2>Export this run</h2>
+          <div class="kbd">all exports come from the run id shown in the header</div>
+          <div class="export-row">
+            <button id="btnExport" class="primary">Run &amp; export all artefacts
+              <span>restored, residual, kernel sheet, curves, report.json — same parameters</span></button>
+          </div>
+          <div class="export-row" id="exportLinks"></div>
+        </div>
+        <div class="block">
+          <h2>Operator</h2>
+          <div class="kbd" id="opInfo">—</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

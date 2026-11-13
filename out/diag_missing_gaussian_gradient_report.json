@@ -1,0 +1,94 @@
+{
+  "artefacts": [
+    "diag_missing_gaussian_gradient_kernel_field.png"
+  ],
+  "blocked_reason": [
+    "1 control cell(s) have no kernel: (1,1). Fill them or remove them from the field."
+  ],
+  "case": {
+    "config": {
+      "iters": 300,
+      "lam_rel": 0.02,
+      "sigma": 0.004,
+      "tol": 1e-09,
+      "tv_eps": 0.008
+    },
+    "expected_diagnostic": "MISSING_KERNEL",
+    "grid": [
+      3,
+      3
+    ],
+    "kind": "gaussian_gradient",
+    "missing_cells": [
+      [
+        1,
+        1
+      ]
+    ],
+    "name": "diag_missing",
+    "seed": 4,
+    "sigma": 0.004,
+    "size": [
+      160,
+      160
+    ],
+    "support": [
+      9,
+      9
+    ],
+    "texture": "bars"
+  },
+  "kernel_diagnostics": {
+    "errors": [
+      {
+        "cells": [
+          [
+            1,
+            1
+          ]
+        ],
+        "code": "MISSING_KERNEL",
+        "message": "1 control cell(s) have no kernel: (1,1). Fill them or remove them from the field.",
+        "severity": "error"
+      }
+    ],
+    "info": [],
+    "ok": false,
+    "warnings": []
+  },
+  "metrics": null,
+  "operator_consistency": {
+    "edge_handling": null,
+    "impulse_equivalence_max_abs": null,
+    "skipped": "field has blocking diagnostics"
+  },
+  "restored": null,
+  "sample_meta": {
+    "boundary": "reflect",
+    "generator": "svdeblur.synth.generate_sample",
+    "grid_shape": [
+      3,
+      3
+    ],
+    "kernel_kind": "gaussian_gradient",
+    "missing_cells": [
+      [
+        1,
+        1
+      ]
+    ],
+    "normalized": true,
+    "seed": 4,
+    "sigma": 0.004,
+    "size": [
+      160,
+      160
+    ],
+    "support": [
+      9,
+      9
+    ],
+    "texture": "bars"
+  },
+  "solve": null
+}
