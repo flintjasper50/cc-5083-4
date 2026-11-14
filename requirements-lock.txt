@@ -1,0 +1,8 @@
+# Exact versions used for the release numbers in README_RELEASE.md.
+# Install with:  python3 -m pip install -r requirements-lock.txt
+# The release is validated on CPython 3.11 with these pins; see the tolerance
+# section of README_RELEASE.md for what changes when these move.
+numpy==1.26.4
+scipy==1.13.1
+Pillow==10.4.0
+pytest==8.3.3

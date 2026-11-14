@@ -123,6 +123,10 @@
     font:11px/1.5 var(--mono);color:var(--mute);margin-top:8px}
   .stop b{color:var(--ink)}
   .stop .why{color:var(--ink);margin-top:3px}
+  .error-box{background:#2a1c1e;border:1px solid var(--bad);border-left:3px solid var(--bad);
+    border-radius:6px;padding:8px;margin-top:8px;font:11px/1.5 var(--mono);color:#f3c9ca}
+  .error-box b{display:block;color:var(--bad);margin-bottom:3px}
+  .error-box .detail{color:#f3c9ca;word-break:break-word}
   .export-row{display:grid;gap:6px;margin-top:8px}
   .export-row button{text-align:left;padding:7px 9px}
   .export-row button span{display:block;font:10px/1.3 var(--mono);color:var(--mute);margin-top:2px;
@@ -298,11 +302,13 @@
             <div class="metric"><div class="k">residual RMS</div><div class="v" id="mRms">—</div></div>
           </div>
           <div class="stop" id="stopBox"><b>stop</b> —</div>
+          <div class="error-box" id="errorBox" hidden></div>
         </div>
         <div class="block">
           <h2>Iteration curves</h2>
           <div class="chart-wrap"><canvas class="chart" id="chart" width="600" height="210"></canvas></div>
           <div class="kbd" id="chartNote">residual ‖r‖/‖b‖ (top), objective (mid), TV (bottom)</div>
+          <div class="kbd" id="iterResidual" style="margin-top:6px">iteration residual —</div>
         </div>
         <div class="block">
           <h2>Export this run</h2>

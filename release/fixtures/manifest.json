@@ -1,0 +1,30 @@
+{
+  "cases": [
+    {
+      "contract": "release/fixtures/kernel_version_mismatch/task.json",
+      "expect_failure": "kernel_field",
+      "name": "kernel_version_mismatch",
+      "out_dir": "out/fixtures/kernel_version_mismatch"
+    },
+    {
+      "contract": "release/fixtures/rgb_image/task.json",
+      "expect_failure": "image",
+      "name": "rgb_image",
+      "out_dir": "out/fixtures/rgb_image"
+    },
+    {
+      "contract": "release/fixtures/missing_kernel_file/task.json",
+      "expect_failure": "kernel_field",
+      "name": "missing_kernel_file",
+      "out_dir": "out/fixtures/missing_kernel_file"
+    },
+    {
+      "contract": "release/fixtures/memory_budget/task.json",
+      "expect_failure": "memory_budget",
+      "name": "memory_budget",
+      "out_dir": "out/fixtures/memory_budget"
+    }
+  ],
+  "manifest_version": 1,
+  "note": "Each case must fail at the named stage; the batch runner reports expectation_met for every entry."
+}

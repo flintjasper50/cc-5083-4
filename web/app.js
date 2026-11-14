@@ -436,6 +436,7 @@ async function runRestore() {
   if (!state.field) { toast("load a sample first", true); return; }
   state.busy = true;
   setStatus("running…");
+  clearError();
   const t0 = performance.now();
   try {
     const body = {
@@ -451,7 +452,9 @@ async function runRestore() {
     if (!res.ok) {
       renderDiagnostics(res.diagnostics);
       renderBlocked(res);
-      toast(`restoration blocked: ${res.blocked_reason[0] || "see diagnostics"}`, true);
+      const why = (res.blocked_reason && res.blocked_reason[0]) || "see diagnostics";
+      showError("restoration blocked by kernel diagnostics", why);
+      toast(`restoration blocked: ${why}`, true);
       setStatus("blocked");
       return;
     }
@@ -461,6 +464,7 @@ async function runRestore() {
     const secs = ((performance.now() - t0) / 1000).toFixed(2);
     setStatus(`done in ${secs}s`);
   } catch (e) {
+    showError("restoration failed", e.message);
     toast(`restore failed: ${e.message}`, true);
     setStatus("error");
   } finally {
@@ -482,6 +486,8 @@ function renderBlocked(res) {
   strip.innerHTML = "";
   $("stopBox").innerHTML = "<b>stop</b> not started — kernel field has blocking diagnostics";
   $("mIn").textContent = $("mOut").textContent = $("mGain").textContent = $("mRms").textContent = "—";
+  $("capRes").textContent = "no run";
+  $("iterResidual").textContent = "iteration residual —";
   drawChart([], [], [], 0);
 }
 
@@ -503,15 +509,25 @@ function renderRun(res) {
   $("stopBox").innerHTML = `<b>stop</b> ${res.series.stop_reason} @ iteration ${
     res.series.stop_iteration}<div class="why"></div>`;
   $("stopBox").querySelector(".why").textContent = res.series.stop_detail;
+  const lastIter = res.series.iteration_residuals.length
+    ? res.series.iteration_residuals[res.series.iteration_residuals.length - 1] : null;
+  $("iterResidual").textContent = lastIter
+    ? `iteration residual: it ${lastIter.iteration} · ‖r‖ ${fmt(lastIter.residual_abs, 4)} `
+      + `· ‖r‖/‖b‖ ${fmt(lastIter.residual_relative, 4)}`
+    : "iteration residual —";
   drawChart(res.series.residuals, res.series.objectives, res.series.tv, res.series.stop_iteration);
   requestAnimationFrame(() => {
     drawChart(res.series.residuals, res.series.objectives, res.series.tv, res.series.stop_iteration);
   });
 
-  // residual image (computed server-side at export only; approximate here from
-  // the returned residual stats by showing the observed/restored difference)
-  $("imgRes").src = res.observed;
-  seResidualOverlay(res);
+  // The residual pane and its caption are the operator's own forward residual
+  // returned by the server (A·restored − observed), not a client-side image
+  // difference.  The final iteration residual is shown alongside so the two
+  // can be compared in the window.
+  $("imgRes").src = res.residual;
+  const finalIter = res.series.residual_abs.length
+    ? res.series.residual_abs[res.series.residual_abs.length - 1] : NaN;
+  $("capRes").textContent = `‖r‖ ${fmt(m.residual.l2, 4)} · rms ${fmt(m.residual.rms, 4)} · final it ${fmt(finalIter, 4)}`;
 
   $("opInfo").innerHTML = `grid ${res.operator.grid_shape.join("×")} · support ${
     res.operator.support.join("×")} · ${res.operator.interpolation}<br>norm ${
@@ -531,43 +547,15 @@ function renderRun(res) {
   }
 }
 
-/* draw the residual as a signed grey image inside the residual card */
-function seResidualOverlay(res) {
-  const stage = $("stageRes");
-  let img = $("imgRes");
-  img.style.visibility = "hidden";
-  let cv = ensureOverlay(stage);
-  cv.style.visibility = "visible";
-  // load both images and difference them
-  const a = new Image(), b = new Image();
-  a.onload = () => {
-    b.onload = () => {
-      const off = document.createElement("canvas");
-      const W = a.naturalWidth, Hh = a.naturalHeight;
-      off.width = W; off.height = Hh;
-      const octx = off.getContext("2d");
-      octx.drawImage(a, 0, 0);
-      const A = octx.getImageData(0, 0, W, Hh).data;
-      octx.clearRect(0, 0, W, Hh); octx.drawImage(b, 0, 0);
-      const B = octx.getImageData(0, 0, W, Hh).data;
-      const out = octx.createImageData(W, Hh);
-      for (let i = 0; i < A.length; i += 4) {
-        const d = A[i] - B[i];           // observed - restored (uint8)
-        const v = clamp(128 + d * 3, 0, 255);
-        out.data[i] = out.data[i + 1] = out.data[i + 2] = v;
-        out.data[i + 3] = 255;
-      }
-      octx.putImageData(out, 0, 0);
-      img.src = off.toDataURL("image/png");
-      img.style.visibility = "visible";
-      cv.getContext("2d").clearRect(0, 0, cv.width, cv.height);
-      img.onload = () => { cv.width = 0; drawCellOverlay(elsOverlay()); };
-      $("capRes").textContent = `RMS ${fmt(res.metrics.residual.rms, 4)} · ±`;
-    };
-    b.src = res.observed;
-  };
-  a.src = res.restored;
+/* ----------------------------------------------------------- errors */
+function showError(title, message) {
+  const box = $("errorBox");
+  box.hidden = false;
+  box.innerHTML = `<b></b><div class="detail"></div>`;
+  box.querySelector("b").textContent = title;
+  box.querySelector(".detail").textContent = message;
 }
+function clearError() { $("errorBox").hidden = true; $("errorBox").textContent = ""; }
 
 /* ----------------------------------------------------------- charts */
 function drawChart(residuals, objectives, tv, stopIter) {
@@ -588,8 +576,7 @@ function drawChart(residuals, objectives, tv, stopIter) {
     { s: residuals, label: "‖r‖/‖b‖", top: 6, h: 70, color: "#e5686b" },
     { s: objectives, label: "objective", top: 88, h: 62, color: "#5aa9e6" },
     { s: tv, label: "TV", top: 162, h: 40, color: "#55c48a" },
-  ];
-  for (const p of panels) {
+  ];  for (const p of panels) {
     ctx.strokeStyle = "#33414f";
     ctx.lineWidth = 1;
     ctx.strokeRect(40, p.top, W - 52, p.h);
@@ -660,6 +647,7 @@ function applyCaseMeta(c) {
 
 async function loadCase(name) {
   setStatus("loading…");
+  clearError();
   try {
     const res = await api("/api/load", { case: name });
     state.field = res.field;
@@ -891,7 +879,9 @@ async function doExport() {
     if (!res.ok) {
       renderDiagnostics(res.diagnostics);
       renderBlocked(res);
-      toast(`export blocked: ${res.blocked_reason[0] || "see diagnostics"}`, true);
+      const why = (res.blocked_reason && res.blocked_reason[0]) || "see diagnostics";
+      showError("export blocked by kernel diagnostics", why);
+      toast(`export blocked: ${why}`, true);
       setStatus("blocked");
       return;
     }

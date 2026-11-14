@@ -1,0 +1,16 @@
+{
+  "allow_signed": false,
+  "boundary": "reflect",
+  "contract_version": 1,
+  "kernel_field": "release/fixtures/rgb_image/field.json",
+  "memory_budget_mb": 512,
+  "name": "rgb_image",
+  "observed_image": "release/fixtures/rgb_image/observed.png",
+  "output_dir": "out/fixtures/rgb_image",
+  "regularization": {
+    "iters": 40,
+    "sigma": 0.004,
+    "tv_eps": 0.008
+  },
+  "threads": 1
+}

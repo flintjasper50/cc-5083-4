@@ -1,0 +1,16 @@
+{
+  "allow_signed": false,
+  "boundary": "reflect",
+  "contract_version": 1,
+  "kernel_field": "release/fixtures/missing_kernel_file/does_not_exist.json",
+  "memory_budget_mb": 512,
+  "name": "missing_kernel_file",
+  "observed_image": "release/fixtures/missing_kernel_file/observed.png",
+  "output_dir": "out/fixtures/missing_kernel_file",
+  "regularization": {
+    "iters": 40,
+    "sigma": 0.004,
+    "tv_eps": 0.008
+  },
+  "threads": 1
+}

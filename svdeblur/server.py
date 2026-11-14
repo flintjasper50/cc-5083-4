@@ -252,6 +252,16 @@ def svc_restore(body: dict[str, Any]) -> dict[str, Any]:
     solver = TVSolver(forward, cfg, reference=sample.observed)
     result = solver.run(sample.observed)
 
+    # The residual shown in the window is the real forward residual of the
+    # restored image under the operator that was just inverted -- not a
+    # client-side difference of two PNGs.
+    residual = forward.apply(result.image) - sample.observed
+    residual_stats_out = residual_stats(sample.observed, result.image, forward)
+    iteration_residuals = [
+        {"iteration": i + 1, "residual_abs": a, "residual_relative": r}
+        for i, (a, r) in enumerate(zip(result.residual_abs, result.residuals))
+    ]
+
     run_id = uuid.uuid4().hex[:12]
     frames = []
     for k in sorted(result.snapshots):
@@ -260,18 +270,20 @@ def svc_restore(body: dict[str, Any]) -> dict[str, Any]:
             "residuals": result.residuals, "objectives": result.objectives,
             "tv": result.tv_terms, "steps": result.step_sizes,
             "noise_floor": result.noise_floor, "stop_reason": result.stop_reason,
-            "stop_detail": result.stop_detail, "stop_iteration": result.stop_iteration}
+            "stop_detail": result.stop_detail, "stop_iteration": result.stop_iteration,
+            "iteration_residuals": iteration_residuals}
     payload_out = {
         "ok": True,
         "run_id": run_id,
         "restored": png_data_url(result.image),
         "observed": png_data_url(sample.observed),
         "sharp": png_data_url(sample.sharp),
+        "residual": png_data_url(np.clip(0.5 + residual * 4.0, 0.0, 1.0)),
         "frames": frames,
         "series": info,
         "metrics": {"psnr_restored_vs_sharp": psnr(result.image, sample.sharp),
                     "psnr_input_vs_sharp": psnr(sample.observed, sample.sharp),
-                    "residual": residual_stats(sample.observed, result.image, forward)},
+                    "residual": residual_stats_out},
         "diagnostics": diags,
         "operator": forward.describe(),
         "config": cfg.as_dict(),

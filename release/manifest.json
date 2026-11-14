@@ -1,0 +1,31 @@
+{
+  "cases": [
+    {
+      "contract": "release/cases/gradient/task.json",
+      "name": "gradient",
+      "out_dir": "out/release/gradient",
+      "save_npy": true
+    },
+    {
+      "contract": "release/cases/rotation/task.json",
+      "name": "rotation",
+      "out_dir": "out/release/rotation",
+      "save_npy": true
+    },
+    {
+      "contract": "release/cases/mixed/task.json",
+      "name": "mixed",
+      "out_dir": "out/release/mixed",
+      "save_npy": true
+    },
+    {
+      "contract": "release/cases/texture/task.json",
+      "name": "texture",
+      "out_dir": "out/release/texture",
+      "save_npy": true
+    }
+  ],
+  "manifest_version": 1,
+  "note": "All cases share the locked single-thread policy; out_dir is resolved from the repository root.",
+  "threads": 1
+}

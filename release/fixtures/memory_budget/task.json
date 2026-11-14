@@ -1,0 +1,16 @@
+{
+  "allow_signed": false,
+  "boundary": "reflect",
+  "contract_version": 1,
+  "kernel_field": "release/fixtures/memory_budget/field.json",
+  "memory_budget_mb": 16,
+  "name": "memory_budget",
+  "observed_image": "release/fixtures/memory_budget/observed.png",
+  "output_dir": "out/fixtures/memory_budget",
+  "regularization": {
+    "iters": 40,
+    "sigma": 0.004,
+    "tv_eps": 0.008
+  },
+  "threads": 1
+}

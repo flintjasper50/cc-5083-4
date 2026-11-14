@@ -1,0 +1,16 @@
+{
+  "allow_signed": false,
+  "boundary": "reflect",
+  "contract_version": 1,
+  "kernel_field": "release/fixtures/kernel_version_mismatch/field.json",
+  "memory_budget_mb": 512,
+  "name": "kernel_version_mismatch",
+  "observed_image": "release/fixtures/kernel_version_mismatch/observed.png",
+  "output_dir": "out/fixtures/kernel_version_mismatch",
+  "regularization": {
+    "iters": 40,
+    "sigma": 0.004,
+    "tv_eps": 0.008
+  },
+  "threads": 1
+}

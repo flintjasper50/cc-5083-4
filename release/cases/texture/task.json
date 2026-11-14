@@ -1,0 +1,19 @@
+{
+  "allow_signed": false,
+  "boundary": "reflect",
+  "contract_version": 1,
+  "kernel_field": "release/cases/texture/field.json",
+  "memory_budget_mb": 512,
+  "name": "texture",
+  "observed_image": "release/cases/texture/observed.png",
+  "output_dir": "out/release/texture",
+  "reference_image": "release/cases/texture/reference.png",
+  "regularization": {
+    "iters": 300,
+    "lam_rel": 0.02,
+    "sigma": 0.003,
+    "tol": 1e-09,
+    "tv_eps": 0.007
+  },
+  "threads": 1
+}

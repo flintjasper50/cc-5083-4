@@ -22,6 +22,9 @@ import numpy as np
 INTERP_MODES = ("bilinear",)
 NORMALIZATIONS = ("unit_sum", "none")
 BOUNDARY_MODES = ("zero", "reflect", "symmetric", "replicate")
+# On-disk kernel-field schema.  The release loader rejects anything else, so
+# an old field cannot be fed to a new build by accident.
+FIELD_VERSION = 2
 
 
 @dataclass
@@ -316,6 +319,7 @@ class KernelField:
                 row.append(self.kernels[i, j].tolist() if self.mask[i, j] else None)
             cells.append(row)
         return {
+            "field_version": FIELD_VERSION,
             "grid_shape": list(self.grid_shape),
             "support": list(self.support),
             "interpolation": self.interpolation,
