@@ -32,3 +32,7 @@ out/selfcheck/
 out/ui_check/
 out/*.json
 release/**/.*.log
+
+# run-specific exports from the graphical restoration window
+out/web_exports/web_*.png
+out/web_exports/web_*_report.json
